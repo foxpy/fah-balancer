@@ -57,9 +57,12 @@ Also keep in mind that it is better not to have more FAH core instances than the
 
 ### Installation
 
-There are no external dependencies to this software. It is enough to have just the Rust toolchain installed. That means building `fah-balancer` is as easy as:
+There are no external dependencies to this software. It is enough to have just the Rust toolchain installed.
+
+It is preferable to build a static binary so it will guaranteely work across all Linux distributions, that means before building you have to install musl toolchain, so the entire build process looks like this:
 
 ```bash
+rustup target add x86_64-unknown-linux-musl
 cargo build --release
 ```
 
