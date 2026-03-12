@@ -1,0 +1,15 @@
+[Unit]
+Description=Folding@home CPU core balancer
+After=fah-client.service
+Wants=systemd-logind.service
+
+[Service]
+User=fah-client
+ExecStart=/usr/local/bin/fah-balancer "<insert your CPU groups here>"
+Restart=always
+TimeoutStopSec=3
+ProtectSystem=full
+ProtectHome=yes
+
+[Install]
+WantedBy=multi-user.target
