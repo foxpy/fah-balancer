@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::{
-    arg,
+    arg::{CpuGroup, Cpu},
     error::{Error, Result},
 };
 use std::{fs, io};
@@ -62,13 +62,13 @@ impl CpuSet {
 
     pub fn from_cpu_group(
         affinity_manager: AffinityManager,
-        cpu_group: &arg::CpuGroup,
+        cpu_group: &CpuGroup,
     ) -> Result<Self> {
         let mut cpu_set = Self::new(affinity_manager);
         for cpu in cpu_group.cpus() {
             match cpu {
-                arg::Cpu::Single(id) => cpu_set.set(affinity_manager, *id)?,
-                arg::Cpu::Range(ids) => {
+                Cpu::Single(id) => cpu_set.set(affinity_manager, *id)?,
+                Cpu::Range(ids) => {
                     for id in ids.clone() {
                         cpu_set.set(affinity_manager, id)?;
                     }

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::error::{Error, Result};
-use std::{env, fs, io, ops};
+use std::{env, fs, io::ErrorKind, ops::RangeInclusive};
 
 pub struct Arg {
     pub cpu_groups: Vec<CpuGroup>,
@@ -17,7 +17,7 @@ pub struct CpuGroup {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Cpu {
     Single(usize),
-    Range(ops::RangeInclusive<usize>),
+    Range(RangeInclusive<usize>),
 }
 
 struct SeenCpus {
@@ -33,7 +33,7 @@ impl SeenCpus {
                 match metadata {
                     Ok(_) => nproc += 1,
                     Err(e) => match e.kind() {
-                        io::ErrorKind::NotFound => break,
+                        ErrorKind::NotFound => break,
                         _ => return Err(Error::Io(e)),
                     },
                 }
@@ -140,13 +140,13 @@ impl TryFrom<&str> for Cpu {
 mod tests {
     use super::{Cpu, CpuGroup};
     use crate::error::Error;
-    use std::ops;
+    use std::ops::RangeInclusive;
 
     fn s(id: usize) -> Cpu {
         Cpu::Single(id)
     }
 
-    fn r(range: ops::RangeInclusive<usize>) -> Cpu {
+    fn r(range: RangeInclusive<usize>) -> Cpu {
         Cpu::Range(range)
     }
 

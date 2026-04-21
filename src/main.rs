@@ -7,12 +7,16 @@ mod fah;
 mod sched_affinity;
 
 use error::{Error, Result};
-use std::{process, thread, time};
+use std::{process, thread, time::Duration};
 
-const SLEEP_DURATION: time::Duration = time::Duration::from_secs(10);
+use arg::{Arg, CpuGroup};
+use fah::{FahClient, FahCore};
+use sched_affinity::{AffinityManager, CpuSet};
+
+const SLEEP_DURATION: Duration = Duration::from_secs(10);
 
 fn main() {
-    let cpu_groups = match arg::Arg::parse() {
+    let cpu_groups = match Arg::parse() {
         Ok(args) => args,
         Err(e) => {
             eprintln!("Failed to parse CPU groups: {e}");
@@ -21,7 +25,7 @@ fn main() {
     }
     .cpu_groups;
 
-    let affinity_manager = match sched_affinity::AffinityManager::new() {
+    let affinity_manager = match AffinityManager::new() {
         Ok(affinity_manager) => affinity_manager,
         Err(e) => {
             eprintln!("Failed to create affinity manager: {e}");
@@ -30,7 +34,7 @@ fn main() {
     };
 
     loop {
-        match fah::FahClient::find() {
+        match FahClient::find() {
             Ok(Some(fah_client)) => {
                 let err = main_loop(affinity_manager, fah_client, &cpu_groups);
                 eprintln!(
@@ -58,9 +62,9 @@ fn main() {
 }
 
 fn main_loop(
-    affinity_manager: sched_affinity::AffinityManager,
-    fah_client: fah::FahClient,
-    cpu_groups: &[arg::CpuGroup],
+    affinity_manager: AffinityManager,
+    fah_client: FahClient,
+    cpu_groups: &[CpuGroup],
 ) -> Error {
     loop {
         let fah_cores = match fah_client.cores() {
@@ -84,10 +88,10 @@ fn main_loop(
 }
 
 fn schedule(
-    affinity_manager: sched_affinity::AffinityManager,
-    mut fah_cores: Vec<fah::FahCore>,
-    mut cpu_groups: Vec<arg::CpuGroup>,
-) -> Result<Vec<(usize, sched_affinity::CpuSet)>> {
+    affinity_manager: AffinityManager,
+    mut fah_cores: Vec<FahCore>,
+    mut cpu_groups: Vec<CpuGroup>,
+) -> Result<Vec<(usize, CpuSet)>> {
     let mut commands = vec![];
 
     while let Some(fah_core) = fah_cores.pop() {
@@ -98,7 +102,7 @@ fn schedule(
 
             commands.push((
                 fah_core.pid,
-                sched_affinity::CpuSet::from_cpu_group(affinity_manager, biggest_cpu_group)?,
+                CpuSet::from_cpu_group(affinity_manager, biggest_cpu_group)?,
             ));
             biggest_cpu_group.total_cpus -= fah_core.threads;
         } else {
@@ -120,48 +124,48 @@ fn schedule(
 
 #[cfg(test)]
 mod tests {
-    use crate::{arg, error::Error, fah, sched_affinity};
+    use crate::{arg::CpuGroup, error::Error, fah::FahCore, sched_affinity::{CpuSet, AffinityManager}};
 
-    fn cores(cores: &[usize]) -> Vec<fah::FahCore> {
+    fn cores(cores: &[usize]) -> Vec<FahCore> {
         cores
             .iter()
             .cloned()
             .enumerate()
-            .map(|(pid, threads)| fah::FahCore {
+            .map(|(pid, threads)| FahCore {
                 pid: pid + 1,
                 threads,
             })
             .collect()
     }
 
-    fn groups(groups: &[&str]) -> Vec<arg::CpuGroup> {
+    fn groups(groups: &[&str]) -> Vec<CpuGroup> {
         groups
             .iter()
-            .map(|group| arg::CpuGroup::try_from(*group).unwrap())
+            .map(|group| CpuGroup::try_from(*group).unwrap())
             .collect()
     }
 
-    fn cpus(ids: &[usize]) -> sched_affinity::CpuSet {
-        let mut cpuset = sched_affinity::CpuSet::mock_new(256);
+    fn cpus(ids: &[usize]) -> CpuSet {
+        let mut cpuset = CpuSet::mock_new(256);
         for id in ids {
             cpuset.mock_set(*id);
         }
         cpuset
     }
 
-    fn assert_sequential_pids(entries: &[(usize, sched_affinity::CpuSet)]) {
+    fn assert_sequential_pids(entries: &[(usize, CpuSet)]) {
         for (i, (pid, _)) in entries.iter().enumerate() {
             assert_eq!(*pid, i + 1);
         }
     }
 
-    fn am() -> sched_affinity::AffinityManager {
-        sched_affinity::AffinityManager::mock_new(256)
+    fn am() -> AffinityManager {
+        AffinityManager::mock_new(256)
     }
 
     fn cmp(
-        mut actual: Vec<(usize, sched_affinity::CpuSet)>,
-        mut expected: Vec<(usize, sched_affinity::CpuSet)>,
+        mut actual: Vec<(usize, CpuSet)>,
+        mut expected: Vec<(usize, CpuSet)>,
     ) {
         actual.sort_by_key(|(pid, _)| *pid);
         assert_sequential_pids(&actual);
