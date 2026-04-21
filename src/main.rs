@@ -124,7 +124,12 @@ fn schedule(
 
 #[cfg(test)]
 mod tests {
-    use crate::{arg::CpuGroup, error::Error, fah::FahCore, sched_affinity::{CpuSet, AffinityManager}};
+    use crate::{
+        arg::CpuGroup,
+        error::Error,
+        fah::FahCore,
+        sched_affinity::{AffinityManager, CpuSet},
+    };
 
     fn cores(cores: &[usize]) -> Vec<FahCore> {
         cores
@@ -163,10 +168,7 @@ mod tests {
         AffinityManager::mock_new(256)
     }
 
-    fn cmp(
-        mut actual: Vec<(usize, CpuSet)>,
-        mut expected: Vec<(usize, CpuSet)>,
-    ) {
+    fn cmp(mut actual: Vec<(usize, CpuSet)>, mut expected: Vec<(usize, CpuSet)>) {
         actual.sort_by_key(|(pid, _)| *pid);
         assert_sequential_pids(&actual);
         expected.sort_by_key(|(pid, _)| *pid);
