@@ -21,8 +21,8 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use Error::*;
         match self {
-            ParseInt(e) => write!(f, "{e}"),
-            Io(e) => write!(f, "{e}"),
+            ParseInt(e) => write!(f, "ParseInt error: {e}"),
+            Io(e) => write!(f, "IO error: {e}"),
             InvalidCpuRange => write!(f, "Invalid CPU range"),
             NoCpuGroups => write!(f, "No CPU groups"),
             CpuIndexTooHigh => write!(f, "CPU index too high"),
@@ -33,7 +33,16 @@ impl fmt::Display for Error {
     }
 }
 
-impl error::Error for Error {}
+impl error::Error for Error {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        use Error::*;
+        match self {
+            ParseInt(e) => Some(e),
+            Io(e) => Some(e),
+            _ => None,
+        }
+    }
+}
 
 impl From<io::Error> for Error {
     fn from(e: io::Error) -> Self {
