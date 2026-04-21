@@ -73,7 +73,7 @@ impl Arg {
         }
 
         // CPU groups with more total_cpus go last
-        cpu_groups.sort_by(|a, b| a.total_cpus.cmp(&b.total_cpus));
+        cpu_groups.sort_by_key(|a| a.total_cpus);
 
         let mut seen_cpus = SeenCpus::new()?;
         for group in &cpu_groups {

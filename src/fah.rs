@@ -51,7 +51,7 @@ impl FahClient {
         }
 
         // cores with more threads go last
-        cores.sort_by(|a, b| a.threads.cmp(&b.threads));
+        cores.sort_by_key(|a| a.threads);
 
         Ok(cores)
     }
