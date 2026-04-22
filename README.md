@@ -57,16 +57,13 @@ Also keep in mind that it is better not to have more FAH core instances than the
 
 ### Installation
 
-There are no external dependencies to this software. It is enough to have just the Rust toolchain installed.
-
-It is preferable to build a static binary so it will guaranteely work across all Linux distributions, that means before building you have to install musl toolchain, so the entire build process looks like this:
+There are no external dependencies to this software. It is enough to have just the Rust toolchain installed. Simply run:
 
 ```bash
-rustup target add x86_64-unknown-linux-musl
-cargo build --release
+make release
 ```
 
-This will produce a statically linked binary at `target/x86_64-unknown-linux-musl/release/fah-balancer`, which you could then copy to anywhere you want to, with `/usr/local/bin/` being a good destination candidate.
+This will produce a statically linked binary at `target/x86_64-unknown-linux-musl/release/fah-balancer`, which you could then copy anywhere you want to, with `/usr/local/bin/` being a sensible default.
 
 You might as well want to consider installing it as a systemd service. For that, copy `fah-balancer.service` to `/etc/systemd/system/` and edit it to provide your CPU groups of choice. Finally, run `systemctl daemon-reload` and `systemctl enable --now fah-balancer.service`.
 
