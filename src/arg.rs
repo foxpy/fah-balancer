@@ -1,8 +1,11 @@
 // Copyright Murad Karammaev
 // SPDX-License-Identifier: MIT
 
-use crate::error::{Error, Result};
-use std::{env, fs, io::ErrorKind, ops::RangeInclusive};
+use crate::{
+    error::{Error, Result},
+    ncpu,
+};
+use std::{env, ops::RangeInclusive};
 
 pub struct Arg {
     pub cpu_groups: Vec<CpuGroup>,
@@ -26,23 +29,8 @@ struct SeenCpus {
 
 impl SeenCpus {
     fn new() -> Result<Self> {
-        let nproc = {
-            let mut nproc = 0;
-            loop {
-                let metadata = fs::metadata(format!("/sys/devices/system/cpu/cpu{nproc}"));
-                match metadata {
-                    Ok(_) => nproc += 1,
-                    Err(e) => match e.kind() {
-                        ErrorKind::NotFound => break,
-                        _ => return Err(Error::Io(e)),
-                    },
-                }
-            }
-            nproc
-        };
-
         Ok(Self {
-            seen_cpus: vec![false; nproc],
+            seen_cpus: vec![false; ncpu::ncpu()],
         })
     }
 

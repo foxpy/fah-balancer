@@ -4,6 +4,7 @@
 use crate::{
     arg::{Cpu, CpuGroup},
     error::{Error, Result},
+    ncpu,
 };
 use std::{fs, io};
 
@@ -14,19 +15,7 @@ pub struct AffinityManager {
 
 impl AffinityManager {
     pub fn new() -> Result<Self> {
-        let mut ncpu = 0usize;
-        for entry in fs::read_dir("/sys/devices/system/cpu")? {
-            if let Ok(file_name) = entry?.file_name().into_string()
-                && let Some((prefix, cpunum)) = file_name.split_once("cpu")
-                && prefix.is_empty()
-                && let Ok(cpunum) = str::parse::<usize>(cpunum)
-                && cpunum > ncpu
-            {
-                ncpu = cpunum;
-            }
-        }
-
-        Ok(Self { ncpu })
+        Ok(Self { ncpu: ncpu::ncpu() })
     }
 
     pub fn set_affinity(self, pid: usize, mask: &CpuSet) -> Result<()> {

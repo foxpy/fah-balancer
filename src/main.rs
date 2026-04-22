@@ -4,6 +4,7 @@
 mod arg;
 mod error;
 mod fah;
+mod ncpu;
 mod sched_affinity;
 
 use error::{Error, Result};
